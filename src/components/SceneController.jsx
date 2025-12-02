@@ -14,6 +14,10 @@ export const SceneController = forwardRef((props, ref) => {
         camera.rotation.set(config.rotation.x, config.rotation.y, config.rotation.z);
       }
     },
+    stop: () => {
+      gsap.killTweensOf(camera.position);
+      gsap.killTweensOf(camera.rotation);
+    },
     move: (config, duration, ease) => {
       const tl = gsap.timeline();
       if (config.position) {

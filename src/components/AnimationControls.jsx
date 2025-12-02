@@ -26,7 +26,7 @@ export function AnimationControls({
             phone: { x: 0, y: 0, z: 0 },
             camera: { x: 0, y: 0, z: 5 },
             duration: 1.5,
-            ease: "power3.out",
+            ease: "power2.inOut",
           },
         ];
   });
@@ -149,7 +149,7 @@ export function AnimationControls({
         phone: { ...prev[prev.length - 1].phone },
         camera: { ...prev[prev.length - 1].camera },
         duration: 1.5,
-        ease: "power3.out",
+        ease: "power2.inOut",
       },
     ]);
   };
@@ -162,7 +162,7 @@ export function AnimationControls({
         phone: { x: randomVal(), y: randomVal(), z: randomVal() },
         camera: { x: randomVal(), y: randomVal(), z: randomVal() },
         duration: 1.5,
-        ease: "power3.out",
+        ease: "power2.inOut",
       },
     ]);
   };

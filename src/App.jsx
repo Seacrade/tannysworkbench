@@ -120,6 +120,10 @@ function App() {
       timelineRef.current.kill();
     }
 
+    // Explicitly stop any running tweens on the objects
+    if (iphoneRef.current.stop) iphoneRef.current.stop();
+    if (cameraControlRef.current.stop) cameraControlRef.current.stop();
+
     // 1. Set Initial State
     iphoneRef.current.set({ position: initialState.phone });
     cameraControlRef.current.set({ position: initialState.camera });

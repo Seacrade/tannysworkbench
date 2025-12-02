@@ -25,6 +25,12 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
         internalRef.current.rotation.set(config.rotation.x, config.rotation.y, config.rotation.z);
       }
     },
+    stop: () => {
+      if (internalRef.current) {
+        gsap.killTweensOf(internalRef.current.position);
+        gsap.killTweensOf(internalRef.current.rotation);
+      }
+    },
     move: (config, duration, ease) => {
       if (!internalRef.current) return null;
       const tl = gsap.timeline();
