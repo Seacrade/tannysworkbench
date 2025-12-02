@@ -147,6 +147,8 @@ function App() {
 
       if (phoneAnim) stepTl.add(phoneAnim, 0);
       if (cameraAnim) stepTl.add(cameraAnim, 0);
+
+      masterTl.add(stepTl);
     });
   };
 

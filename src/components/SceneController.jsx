@@ -48,6 +48,34 @@ export const SceneController = forwardRef((props, ref) => {
       }
       return tl;
     },
+    animateTo: (tl, config, duration, ease, position) => {
+      if (config.position) {
+        tl.to(
+          camera.position,
+          {
+            x: config.position.x,
+            y: config.position.y,
+            z: config.position.z,
+            duration: duration,
+            ease: ease,
+          },
+          position
+        );
+      }
+      if (config.rotation) {
+        tl.to(
+          camera.rotation,
+          {
+            x: config.rotation.x,
+            y: config.rotation.y,
+            z: config.rotation.z,
+            duration: duration,
+            ease: ease,
+          },
+          position
+        );
+      }
+    },
     animate: (config) => {
       // Kill existing animations
       gsap.killTweensOf(camera.position);

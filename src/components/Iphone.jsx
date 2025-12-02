@@ -63,6 +63,36 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
       }
       return tl;
     },
+    animateTo: (tl, config, duration, ease, position) => {
+      if (!internalRef.current) return;
+
+      if (config.position) {
+        tl.to(
+          internalRef.current.position,
+          {
+            x: config.position.x,
+            y: config.position.y,
+            z: config.position.z,
+            duration: duration,
+            ease: ease,
+          },
+          position
+        );
+      }
+      if (config.rotation) {
+        tl.to(
+          internalRef.current.rotation,
+          {
+            x: config.rotation.x,
+            y: config.rotation.y,
+            z: config.rotation.z,
+            duration: duration,
+            ease: ease,
+          },
+          position
+        );
+      }
+    },
     animate: (config) => {
       if (!internalRef.current) return;
 
