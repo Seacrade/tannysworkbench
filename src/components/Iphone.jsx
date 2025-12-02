@@ -211,6 +211,8 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
     }
   }, []);
 
+  const wasVisible = useRef(true);
+
   useFrame((state, delta) => {
     if (isSpinning && internalRef.current) {
       internalRef.current.rotation.y += delta * 0.5;
@@ -236,9 +238,11 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
       // dot > -0.03 starts fading slightly before 90 degrees.
       const isVisible = dot < -0.03;
 
-      htmlRef.current.style.opacity = isVisible ? 1 : 0;
-      htmlRef.current.style.pointerEvents = isVisible ? "auto" : "none";
-      htmlRef.current.style.transition = "opacity 0.1s";
+      if (isVisible !== wasVisible.current) {
+        htmlRef.current.style.opacity = isVisible ? 1 : 0;
+        htmlRef.current.style.pointerEvents = isVisible ? "auto" : "none";
+        wasVisible.current = isVisible;
+      }
     }
   });
 
@@ -251,7 +255,8 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
         wrapperClass="htmlScreen"
         position={[0, -0.1, 0.4]}
         scale={0.69}
-        rotation={[0, 0, 0]}>
+        rotation={[0, 0, 0]}
+        style={{ transition: "opacity 0.1s", willChange: "transform" }}>
         <iframe
           src="https://tattoomii.com"
           style={{
