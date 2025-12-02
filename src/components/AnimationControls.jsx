@@ -26,6 +26,7 @@ export function AnimationControls({
             phone: { x: 0, y: 0, z: 0 },
             camera: { x: 0, y: 0, z: 5 },
             duration: 1.5,
+            delay: 0,
             ease: "power2.inOut",
           },
         ];
@@ -107,10 +108,10 @@ export function AnimationControls({
   const handleStepChange = (index, entity, axis, value) => {
     setSteps((prev) => {
       const newSteps = [...prev];
-      if (entity === "duration" || entity === "ease") {
+      if (entity === "duration" || entity === "delay" || entity === "ease") {
         newSteps[index] = {
           ...newSteps[index],
-          [entity]: entity === "duration" ? roundInput(value) : value,
+          [entity]: entity === "duration" || entity === "delay" ? roundInput(value) : value,
         };
       } else {
         newSteps[index] = {
@@ -156,6 +157,7 @@ export function AnimationControls({
         z: sanitizeValue(step.camera.z),
       },
       duration: sanitizeValue(step.duration) || 1.5,
+      delay: sanitizeValue(step.delay) || 0,
       ease: step.ease,
     }));
 
@@ -169,6 +171,7 @@ export function AnimationControls({
         phone: { ...prev[prev.length - 1].phone },
         camera: { ...prev[prev.length - 1].camera },
         duration: 1.5,
+        delay: 0,
         ease: "power2.inOut",
       },
     ]);
@@ -184,6 +187,7 @@ export function AnimationControls({
           phone: { ...lastPhonePos },
           camera: { x: randomVal(), y: randomVal(), z: randomVal() },
           duration: 1.5,
+          delay: 0,
           ease: "power2.inOut",
         },
       ];
@@ -373,6 +377,13 @@ export function AnimationControls({
                 type="number"
                 value={step.duration}
                 onChange={(e) => handleStepChange(index, "duration", null, e.target.value)}
+                step="0.1"
+              />
+              <span>Delay</span>
+              <input
+                type="number"
+                value={step.delay}
+                onChange={(e) => handleStepChange(index, "delay", null, e.target.value)}
                 step="0.1"
               />
             </div>

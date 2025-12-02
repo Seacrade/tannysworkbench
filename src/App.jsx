@@ -48,6 +48,62 @@ const getContrastColor = (hexColor) => {
   return yiq >= 128 ? "#1a1a1a" : "#ffffff";
 };
 
+const SmoothZoom = ({ orbitControlsRef }) => {
+  const { camera, gl } = useThree();
+  const tweenRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+
+    const handleWheel = (e) => {
+      if (!orbitControlsRef.current) return;
+      e.preventDefault();
+
+      // Kill any running zoom tween
+      if (tweenRef.current) tweenRef.current.kill();
+
+      const controls = orbitControlsRef.current;
+      const target = controls.target;
+
+      // Current distance
+      const currentDist = camera.position.distanceTo(target);
+
+      // Calculate target distance
+      // Scroll down (positive delta) -> Zoom out (increase distance)
+      // Scroll up (negative delta) -> Zoom in (decrease distance)
+      const delta = e.deltaY * (e.deltaMode === 1 ? 16 : 1);
+      const scale = Math.pow(1.05, delta * 0.1); // Adjust sensitivity
+
+      let targetDist = currentDist * scale;
+
+      // Clamp (OrbitControls defaults or custom)
+      targetDist = Math.max(2, Math.min(50, targetDist));
+
+      // Animate
+      tweenRef.current = gsap.to(
+        { dist: currentDist },
+        {
+          dist: targetDist,
+          duration: 1.0, // Smooth duration
+          ease: "power3.out",
+          onUpdate: function () {
+            const newDist = this.targets()[0].dist;
+
+            // Apply new distance while preserving rotation
+            const direction = camera.position.clone().sub(target).normalize();
+            camera.position.copy(target).add(direction.multiplyScalar(newDist));
+          },
+        }
+      );
+    };
+
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", handleWheel);
+  }, [camera, gl, orbitControlsRef]);
+
+  return null;
+};
+
 function App() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [currentTheme, setCurrentTheme] = useState("black");
@@ -148,7 +204,7 @@ function App() {
       if (phoneAnim) stepTl.add(phoneAnim, 0);
       if (cameraAnim) stepTl.add(cameraAnim, 0);
 
-      masterTl.add(stepTl);
+      masterTl.add(stepTl, "+=" + (step.delay || 0));
     });
   };
 
@@ -276,7 +332,14 @@ function App() {
           </Suspense>
 
           <ContactShadows position={[0, -2.5, 0]} opacity={0.6} scale={10} blur={2} far={5} />
-          <OrbitControls ref={orbitControlsRef} enableZoom={true} enablePan={true} />
+          <OrbitControls
+            ref={orbitControlsRef}
+            enableZoom={false}
+            enablePan={true}
+            enableDamping={true}
+            dampingFactor={0.05}
+          />
+          <SmoothZoom orbitControlsRef={orbitControlsRef} />
         </Canvas>
       </div>
       <LoadingScreen />
