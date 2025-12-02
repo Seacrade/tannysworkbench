@@ -77,12 +77,29 @@ export function AnimationControls({
     localStorage.setItem("savedAnimations", JSON.stringify(updated));
   };
 
+  const roundInput = (val) => {
+    const str = val.toString();
+    if (str === "" || str === "-" || str === "+") return str;
+    if (str.endsWith(".")) return str;
+
+    const num = parseFloat(str);
+    if (isNaN(num)) return str;
+
+    if (str.includes(".")) {
+      const parts = str.split(".");
+      if (parts[1].length > 1) {
+        return parseFloat(num.toFixed(1));
+      }
+    }
+    return str;
+  };
+
   const handleInitialChange = (entity, axis, value) => {
     setInitialState((prev) => ({
       ...prev,
       [entity]: {
         ...prev[entity],
-        [axis]: value,
+        [axis]: roundInput(value),
       },
     }));
   };
@@ -91,13 +108,16 @@ export function AnimationControls({
     setSteps((prev) => {
       const newSteps = [...prev];
       if (entity === "duration" || entity === "ease") {
-        newSteps[index] = { ...newSteps[index], [entity]: entity === "duration" ? value : value };
+        newSteps[index] = {
+          ...newSteps[index],
+          [entity]: entity === "duration" ? roundInput(value) : value,
+        };
       } else {
         newSteps[index] = {
           ...newSteps[index],
           [entity]: {
             ...newSteps[index][entity],
-            [axis]: value,
+            [axis]: roundInput(value),
           },
         };
       }
@@ -155,16 +175,19 @@ export function AnimationControls({
   };
 
   const addRandomStep = () => {
-    const randomVal = () => (Math.random() * 20 - 10).toFixed(2);
-    setSteps((prev) => [
-      ...prev,
-      {
-        phone: { x: randomVal(), y: randomVal(), z: randomVal() },
-        camera: { x: randomVal(), y: randomVal(), z: randomVal() },
-        duration: 1.5,
-        ease: "power2.inOut",
-      },
-    ]);
+    const randomVal = () => parseFloat((Math.random() * 20 - 10).toFixed(1));
+    setSteps((prev) => {
+      const lastPhonePos = prev.length > 0 ? prev[prev.length - 1].phone : initialState.phone;
+      return [
+        ...prev,
+        {
+          phone: { ...lastPhonePos },
+          camera: { x: randomVal(), y: randomVal(), z: randomVal() },
+          duration: 1.5,
+          ease: "power2.inOut",
+        },
+      ];
+    });
   };
 
   const removeStep = (index) => {
@@ -173,14 +196,27 @@ export function AnimationControls({
     }
   };
 
+  const roundVal = (val) => parseFloat(Number(val).toFixed(1));
+
   const handleCapture = (index) => {
     const captured = onCapture();
     if (captured) {
+      const roundedPhone = {
+        x: roundVal(captured.phone.x),
+        y: roundVal(captured.phone.y),
+        z: roundVal(captured.phone.z),
+      };
+      const roundedCamera = {
+        x: roundVal(captured.camera.x),
+        y: roundVal(captured.camera.y),
+        z: roundVal(captured.camera.z),
+      };
+
       if (index === -1) {
         // Capture to Initial State
         setInitialState({
-          phone: captured.phone,
-          camera: captured.camera,
+          phone: roundedPhone,
+          camera: roundedCamera,
         });
       } else {
         // Capture to Step
@@ -188,8 +224,8 @@ export function AnimationControls({
           const newSteps = [...prev];
           newSteps[index] = {
             ...newSteps[index],
-            phone: captured.phone,
-            camera: captured.camera,
+            phone: roundedPhone,
+            camera: roundedCamera,
           };
           return newSteps;
         });
