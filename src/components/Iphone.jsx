@@ -213,16 +213,16 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
         ref={htmlRef}
         transform
         wrapperClass="htmlScreen"
-        position={[0, 0, 0.4]}
+        position={[0, -0.1, 0.4]}
         scale={0.69}
         rotation={[0, 0, 0]}>
         <iframe
           src="https://tattoomii.com"
           style={{
             width: "380px",
-            height: "825px",
+            height: "822px",
             border: "none",
-            borderRadius: "60px",
+            borderRadius: "55px",
             background: "black",
           }}
         />

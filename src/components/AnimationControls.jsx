@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-export function AnimationControls({ onPlay, onCapture }) {
+export function AnimationControls({
+  onPlay,
+  onCapture,
+  isRecording,
+  onStartRecording,
+  onStopRecording,
+}) {
   const [initialState, setInitialState] = useState(() => {
     const saved = localStorage.getItem("currentInitialState");
     return saved
@@ -366,6 +372,17 @@ export function AnimationControls({ onPlay, onCapture }) {
       </div>
 
       <button onClick={handlePlay}>Play Animation Sequence</button>
+
+      <button
+        onClick={isRecording ? onStopRecording : onStartRecording}
+        style={{
+          marginTop: "10px",
+          background: isRecording ? "#ef4444" : "var(--button-bg)",
+          color: "#ffffff",
+          border: "1px solid var(--border-color)",
+        }}>
+        {isRecording ? "Stop Recording" : "Start Recording"}
+      </button>
 
       <div
         className="section"
