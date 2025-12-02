@@ -5,7 +5,7 @@ import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
-  const { scene } = useGLTF("/models/iphone_16/scene.gltf");
+  const { scene } = useGLTF(`${import.meta.env.BASE_URL}models/iphone_16/scene.gltf`);
   const internalRef = useRef();
   const htmlRef = useRef();
   const vectors = useRef({
@@ -237,4 +237,4 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
   );
 });
 
-useGLTF.preload("/models/iphone_16/scene.gltf");
+useGLTF.preload(`${import.meta.env.BASE_URL}models/iphone_16/scene.gltf`);
