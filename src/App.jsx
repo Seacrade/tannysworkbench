@@ -58,6 +58,7 @@ function App() {
   const iphoneRef = useRef();
   const cameraControlRef = useRef();
   const timelineRef = useRef(null);
+  const orbitControlsRef = useRef();
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -273,7 +274,7 @@ function App() {
           </Suspense>
 
           <ContactShadows position={[0, -2.5, 0]} opacity={0.6} scale={10} blur={2} far={5} />
-          <OrbitControls enableZoom={true} enablePan={true} />
+          <OrbitControls ref={orbitControlsRef} enableZoom={true} enablePan={true} />
         </Canvas>
       </div>
       <LoadingScreen />
@@ -458,13 +459,13 @@ function App() {
             </div>
           </div>
           <button onClick={() => setIsSpinning(!isSpinning)}>
-            {isSpinning ? "Stop Spinning" : "Start Spinning"}
+            {isSpinning ? "Staaahp im dizzy" : "Spin me"}
           </button>
           <button
             onClick={() => {
               if (cameraControlRef.current) {
                 cameraControlRef.current.move(
-                  { position: { x: 0, y: 0, z: 10 } },
+                  { position: { x: 0, y: 0, z: 15 } },
                   1.5,
                   "power3.out"
                 );
@@ -475,6 +476,10 @@ function App() {
                   1.5,
                   "power3.out"
                 );
+              }
+              if (orbitControlsRef.current) {
+                orbitControlsRef.current.target.set(0, 0, 0);
+                orbitControlsRef.current.update();
               }
             }}
             style={{ marginTop: "5px" }}>
