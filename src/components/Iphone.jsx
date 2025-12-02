@@ -219,10 +219,10 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
         <iframe
           src="https://tattoomii.com"
           style={{
-            width: "390px",
-            height: "823px",
+            width: "380px",
+            height: "825px",
             border: "none",
-            borderRadius: "40px",
+            borderRadius: "60px",
             background: "black",
           }}
         />

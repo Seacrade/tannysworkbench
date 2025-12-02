@@ -148,6 +148,19 @@ export function AnimationControls({ onPlay, onCapture }) {
     ]);
   };
 
+  const addRandomStep = () => {
+    const randomVal = () => (Math.random() * 20 - 10).toFixed(2);
+    setSteps((prev) => [
+      ...prev,
+      {
+        phone: { x: randomVal(), y: randomVal(), z: randomVal() },
+        camera: { x: randomVal(), y: randomVal(), z: randomVal() },
+        duration: 1.5,
+        ease: "power3.out",
+      },
+    ]);
+  };
+
   const removeStep = (index) => {
     if (steps.length > 1) {
       setSteps((prev) => prev.filter((_, i) => i !== index));
@@ -188,7 +201,7 @@ export function AnimationControls({ onPlay, onCapture }) {
           <button
             onClick={() => handleCapture(-1)}
             style={{ width: "auto", marginTop: 0, padding: "2px 8px", fontSize: "0.8rem" }}>
-            Capture Current
+            Current
           </button>
         </div>
         <div className="row">
@@ -250,7 +263,7 @@ export function AnimationControls({ onPlay, onCapture }) {
                     fontSize: "0.8rem",
                     marginRight: "5px",
                   }}>
-                  Capture
+                  Current
                 </button>
                 {steps.length > 1 && (
                   <button
@@ -343,9 +356,14 @@ export function AnimationControls({ onPlay, onCapture }) {
         ))}
       </div>
 
-      <button onClick={addStep} style={{ background: "#444", marginBottom: "10px" }}>
-        + Add Step
-      </button>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+        <button onClick={addStep} style={{ background: "#444", flex: 1 }}>
+          + Add Step
+        </button>
+        <button onClick={addRandomStep} style={{ background: "#444", flex: 1 }}>
+          + Random Step
+        </button>
+      </div>
 
       <button onClick={handlePlay}>Play Animation Sequence</button>
 
