@@ -1,0 +1,289 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --bg-dark: #1a1a1a;
+  --bg-panel: rgba(30, 30, 30, 0.85);
+  --bg-input: #2a2a2a;
+  --border-color: #444;
+  --primary-color: #646cff;
+  --primary-hover: #535bf2;
+  --text-main: #ffffff;
+  --text-muted: #a1a1a1;
+  --danger-color: #d32f2f;
+  --danger-hover: #b71c1c;
+  --success-color: #2e7d32;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  overflow: hidden;
+}
+
+.App {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.canvas-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* UI Overlay - Sidebar Style */
+.ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 340px;
+  z-index: 10;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  pointer-events: none; /* Allow clicking through to canvas where there are no controls */
+
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.ui-overlay::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ui-overlay::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ui-overlay::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+/* Header */
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: var(--text-main);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+}
+
+p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  pointer-events: auto;
+}
+
+/* Controls Container */
+.controls {
+  pointer-events: auto;
+}
+
+.controls button {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Animation Controls Panel */
+.animation-controls {
+  pointer-events: auto;
+  background: var(--bg-panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.animation-controls h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.animation-controls h4 {
+  margin: 0 0 12px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Input Rows */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.row span {
+  width: 50px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Inputs & Selects */
+input[type="number"],
+input[type="text"],
+select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid transparent;
+  color: var(--text-main);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: "Inter", sans-serif;
+  transition: all 0.2s ease;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: #333;
+}
+
+/* Buttons */
+button {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Primary Action Buttons */
+.animation-controls > button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+}
+
+.animation-controls > button:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+}
+
+/* Secondary / Small Buttons */
+button[style*="width: auto"] {
+  padding: 4px 10px !important;
+  font-size: 0.75rem !important;
+  background: #444;
+  color: #eee;
+}
+
+button[style*="width: auto"]:hover {
+  background: #555;
+}
+
+/* Danger Buttons */
+button[style*="#d32f2f"] {
+  background: rgba(211, 47, 47, 0.2) !important;
+  color: #ff8a80 !important;
+  border: 1px solid rgba(211, 47, 47, 0.3);
+}
+
+button[style*="#d32f2f"]:hover {
+  background: rgba(211, 47, 47, 0.4) !important;
+}
+
+/* Edit Buttons */
+button[style*="#1976d2"] {
+  background: rgba(25, 118, 210, 0.2) !important;
+  color: #90caf9 !important;
+  border: 1px solid rgba(25, 118, 210, 0.3);
+}
+
+button[style*="#1976d2"]:hover {
+  background: rgba(25, 118, 210, 0.4) !important;
+}
+
+/* Saved Animations List */
+.saved-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+
+.saved-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.saved-item span {
+  cursor: pointer;
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+/* Step Cards */
+.step-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.htmlScreen {
+  backface-visibility: hidden;
+}
