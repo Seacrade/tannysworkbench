@@ -13,10 +13,14 @@ export const SceneController = forwardRef((props, ref) => {
       if (config.rotation) {
         camera.rotation.set(config.rotation.x, config.rotation.y, config.rotation.z);
       }
+      if (config.up) {
+        camera.up.set(config.up.x, config.up.y, config.up.z);
+      }
     },
     stop: () => {
       gsap.killTweensOf(camera.position);
       gsap.killTweensOf(camera.rotation);
+      gsap.killTweensOf(camera.up);
     },
     move: (config, duration, ease) => {
       const tl = gsap.timeline();
@@ -40,6 +44,19 @@ export const SceneController = forwardRef((props, ref) => {
             x: config.rotation.x,
             y: config.rotation.y,
             z: config.rotation.z,
+            duration: duration,
+            ease: ease,
+          },
+          0
+        );
+      }
+      if (config.up) {
+        tl.to(
+          camera.up,
+          {
+            x: config.up.x,
+            y: config.up.y,
+            z: config.up.z,
             duration: duration,
             ease: ease,
           },
@@ -132,6 +149,11 @@ export const SceneController = forwardRef((props, ref) => {
           x: camera.rotation.x,
           y: camera.rotation.y,
           z: camera.rotation.z,
+        },
+        up: {
+          x: camera.up.x,
+          y: camera.up.y,
+          z: camera.up.z,
         },
       };
     },

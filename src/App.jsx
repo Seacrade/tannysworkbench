@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, ContactShadows, GizmoHelper, GizmoViewport } from "@react-three/drei";
+import {
+  Environment,
+  ArcballControls,
+  ContactShadows,
+  GizmoHelper,
+  GizmoViewport,
+} from "@react-three/drei";
 import { Iphone } from "./components/Iphone";
 import { AnimationControls } from "./components/AnimationControls";
 import { SceneController } from "./components/SceneController";
@@ -185,16 +191,30 @@ function App() {
 
     // 1. Set Initial State
     iphoneRef.current.set({ position: initialState.phone });
-    cameraControlRef.current.set({ position: initialState.camera });
+    cameraControlRef.current.set({
+      position: initialState.camera.position,
+      rotation: initialState.camera.rotation,
+      up: initialState.cameraUp || { x: 0, y: 1, z: 0 },
+    });
 
     if (orbitControlsRef.current) {
+      // Disable controls during animation to prevent conflict
+      orbitControlsRef.current.enabled = false;
       const target = initialState.target || { x: 0, y: 0, z: 0 };
       orbitControlsRef.current.target.set(target.x, target.y, target.z);
       orbitControlsRef.current.update();
     }
 
     // 2. Create Master Timeline
-    const masterTl = gsap.timeline();
+    const masterTl = gsap.timeline({
+      onComplete: () => {
+        // Re-enable controls after animation
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.enabled = true;
+          orbitControlsRef.current.update();
+        }
+      },
+    });
     timelineRef.current = masterTl;
 
     // 3. Add Steps
@@ -204,7 +224,11 @@ function App() {
       const phoneAnim = iphoneRef.current.move({ position: step.phone }, step.duration, step.ease);
 
       const cameraAnim = cameraControlRef.current.move(
-        { position: step.camera },
+        {
+          position: step.camera.position,
+          rotation: step.camera.rotation,
+          up: step.cameraUp,
+        },
         step.duration,
         step.ease
       );
@@ -324,7 +348,10 @@ function App() {
 
     return {
       phone: phoneState ? phoneState.position : { x: 0, y: 0, z: 0 },
-      camera: cameraState ? cameraState.position : { x: 0, y: 0, z: 25 },
+      camera: cameraState
+        ? { position: cameraState.position, rotation: cameraState.rotation }
+        : { position: { x: 0, y: 0, z: 25 }, rotation: { x: 0, y: 0, z: 0 } },
+      cameraUp: cameraState && cameraState.up ? cameraState.up : { x: 0, y: 1, z: 0 },
       target: { x: target.x, y: target.y, z: target.z },
     };
   };
@@ -363,12 +390,13 @@ function App() {
           </Suspense>
 
           <ContactShadows position={[0, -2.5, 0]} opacity={0.6} scale={10} blur={2} far={5} />
-          <OrbitControls
+          <ArcballControls
             ref={orbitControlsRef}
+            makeDefault
             enableZoom={false}
             enablePan={true}
-            enableDamping={true}
-            dampingFactor={0.05}
+            dampingFactor={15}
+            gizmosVisible={false}
           />
           <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
             <GizmoViewport axisColors={["#9d4b4b", "#2f7f4f", "#3b5b9d"]} labelColor="white" />
@@ -595,7 +623,11 @@ function App() {
             onClick={() => {
               if (cameraControlRef.current) {
                 cameraControlRef.current.move(
-                  { position: { x: 0, y: 0, z: 15 } },
+                  {
+                    position: { x: 0, y: 0, z: 15 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    up: { x: 0, y: 1, z: 0 },
+                  },
                   1.5,
                   "power3.out"
                 );
@@ -608,8 +640,22 @@ function App() {
                 );
               }
               if (orbitControlsRef.current) {
-                orbitControlsRef.current.target.set(0, 0, 0);
-                orbitControlsRef.current.update();
+                // Disable controls during reset
+                orbitControlsRef.current.enabled = false;
+
+                // Animate target back to 0,0,0
+                gsap.to(orbitControlsRef.current.target, {
+                  x: 0,
+                  y: 0,
+                  z: 0,
+                  duration: 1.5,
+                  ease: "power3.out",
+                  onComplete: () => {
+                    // Re-enable controls and reset internal state if needed
+                    orbitControlsRef.current.enabled = true;
+                    orbitControlsRef.current.update();
+                  },
+                });
               }
             }}
             style={{ marginTop: "5px" }}>
