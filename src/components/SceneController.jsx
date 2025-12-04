@@ -17,12 +17,16 @@ export const SceneController = forwardRef((props, ref) => {
         camera.up.set(config.up.x, config.up.y, config.up.z);
       }
     },
+    lookAt: (target) => {
+      camera.lookAt(target.x, target.y, target.z);
+    },
     stop: () => {
       gsap.killTweensOf(camera.position);
       gsap.killTweensOf(camera.rotation);
       gsap.killTweensOf(camera.up);
     },
     move: (config, duration, ease) => {
+      console.log("SceneController move:", config, duration, ease);
       const tl = gsap.timeline();
       if (config.position) {
         tl.to(
@@ -86,6 +90,19 @@ export const SceneController = forwardRef((props, ref) => {
             x: config.rotation.x,
             y: config.rotation.y,
             z: config.rotation.z,
+            duration: duration,
+            ease: ease,
+          },
+          position
+        );
+      }
+      if (config.up) {
+        tl.to(
+          camera.up,
+          {
+            x: config.up.x,
+            y: config.up.y,
+            z: config.up.z,
             duration: duration,
             ease: ease,
           },

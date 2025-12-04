@@ -13,7 +13,11 @@ export function AnimationControls({
       ? JSON.parse(saved)
       : {
           phone: { x: 0, y: -2, z: 0 },
-          camera: { x: 0, y: 0, z: 25 },
+          camera: {
+            position: { x: 0, y: 0, z: 25 },
+            rotation: { x: 0, y: 0, z: 0 },
+          },
+          cameraUp: { x: 0, y: 1, z: 0 },
           target: { x: 0, y: 0, z: 0 },
         };
   });
@@ -25,7 +29,11 @@ export function AnimationControls({
       : [
           {
             phone: { x: 0, y: 0, z: 0 },
-            camera: { x: 0, y: 0, z: 5 },
+            camera: {
+              position: { x: 0, y: 0, z: 5 },
+              rotation: { x: 0, y: 0, z: 0 },
+            },
+            cameraUp: { x: 0, y: 1, z: 0 },
             target: { x: 0, y: 0, z: 0 },
             duration: 1.5,
             delay: 0,
@@ -71,7 +79,70 @@ export function AnimationControls({
   };
 
   const previewAnimation = (anim) => {
-    onPlay({ initialState: anim.initialState, steps: anim.steps });
+    const sanitizedInitial = {
+      phone: {
+        x: sanitizeValue(anim.initialState.phone.x),
+        y: sanitizeValue(anim.initialState.phone.y),
+        z: sanitizeValue(anim.initialState.phone.z),
+      },
+      camera: {
+        position: {
+          x: sanitizeValue(anim.initialState.camera.position?.x || anim.initialState.camera.x),
+          y: sanitizeValue(anim.initialState.camera.position?.y || anim.initialState.camera.y),
+          z: sanitizeValue(anim.initialState.camera.position?.z || anim.initialState.camera.z),
+        },
+        rotation: {
+          x: sanitizeValue(anim.initialState.camera.rotation?.x || 0),
+          y: sanitizeValue(anim.initialState.camera.rotation?.y || 0),
+          z: sanitizeValue(anim.initialState.camera.rotation?.z || 0),
+        },
+      },
+      cameraUp: {
+        x: sanitizeValue(anim.initialState.cameraUp?.x || 0),
+        y: sanitizeValue(anim.initialState.cameraUp?.y || 1),
+        z: sanitizeValue(anim.initialState.cameraUp?.z || 0),
+      },
+      target: {
+        x: sanitizeValue(anim.initialState.target?.x || 0),
+        y: sanitizeValue(anim.initialState.target?.y || 0),
+        z: sanitizeValue(anim.initialState.target?.z || 0),
+      },
+    };
+
+    const sanitizedSteps = anim.steps.map((step) => ({
+      phone: {
+        x: sanitizeValue(step.phone.x),
+        y: sanitizeValue(step.phone.y),
+        z: sanitizeValue(step.phone.z),
+      },
+      camera: {
+        position: {
+          x: sanitizeValue(step.camera.position?.x || step.camera.x),
+          y: sanitizeValue(step.camera.position?.y || step.camera.y),
+          z: sanitizeValue(step.camera.position?.z || step.camera.z),
+        },
+        rotation: {
+          x: sanitizeValue(step.camera.rotation?.x || 0),
+          y: sanitizeValue(step.camera.rotation?.y || 0),
+          z: sanitizeValue(step.camera.rotation?.z || 0),
+        },
+      },
+      cameraUp: {
+        x: sanitizeValue(step.cameraUp?.x || 0),
+        y: sanitizeValue(step.cameraUp?.y || 1),
+        z: sanitizeValue(step.cameraUp?.z || 0),
+      },
+      target: {
+        x: sanitizeValue(step.target?.x || 0),
+        y: sanitizeValue(step.target?.y || 0),
+        z: sanitizeValue(step.target?.z || 0),
+      },
+      duration: sanitizeValue(step.duration) || 1.5,
+      delay: sanitizeValue(step.delay) || 0,
+      ease: step.ease,
+    }));
+
+    onPlay({ initialState: sanitizedInitial, steps: sanitizedSteps });
   };
 
   const deleteAnimation = (index) => {
@@ -98,29 +169,56 @@ export function AnimationControls({
   };
 
   const handleInitialChange = (entity, axis, value) => {
-    setInitialState((prev) => ({
-      ...prev,
-      [entity]: {
-        ...prev[entity],
-        [axis]: roundInput(value),
-      },
-    }));
+    const val = roundInput(value);
+    setInitialState((prev) => {
+      if (entity === "camera") {
+        return {
+          ...prev,
+          camera: {
+            ...prev.camera,
+            position: {
+              ...prev.camera.position,
+              [axis]: val,
+            },
+          },
+        };
+      }
+      return {
+        ...prev,
+        [entity]: {
+          ...prev[entity],
+          [axis]: val,
+        },
+      };
+    });
   };
 
   const handleStepChange = (index, entity, axis, value) => {
+    const val = roundInput(value);
     setSteps((prev) => {
       const newSteps = [...prev];
-      if (entity === "duration" || entity === "delay" || entity === "ease") {
+      if (entity === "camera") {
         newSteps[index] = {
           ...newSteps[index],
-          [entity]: entity === "duration" || entity === "delay" ? roundInput(value) : value,
+          camera: {
+            ...newSteps[index].camera,
+            position: {
+              ...newSteps[index].camera.position,
+              [axis]: val,
+            },
+          },
+        };
+      } else if (entity === "duration" || entity === "delay" || entity === "ease") {
+        newSteps[index] = {
+          ...newSteps[index],
+          [entity]: entity === "ease" ? value : val,
         };
       } else {
         newSteps[index] = {
           ...newSteps[index],
           [entity]: {
             ...newSteps[index][entity],
-            [axis]: roundInput(value),
+            [axis]: val,
           },
         };
       }
@@ -141,9 +239,21 @@ export function AnimationControls({
         z: sanitizeValue(initialState.phone.z),
       },
       camera: {
-        x: sanitizeValue(initialState.camera.x),
-        y: sanitizeValue(initialState.camera.y),
-        z: sanitizeValue(initialState.camera.z),
+        position: {
+          x: sanitizeValue(initialState.camera.position?.x || initialState.camera.x),
+          y: sanitizeValue(initialState.camera.position?.y || initialState.camera.y),
+          z: sanitizeValue(initialState.camera.position?.z || initialState.camera.z),
+        },
+        rotation: {
+          x: sanitizeValue(initialState.camera.rotation?.x || 0),
+          y: sanitizeValue(initialState.camera.rotation?.y || 0),
+          z: sanitizeValue(initialState.camera.rotation?.z || 0),
+        },
+      },
+      cameraUp: {
+        x: sanitizeValue(initialState.cameraUp?.x || 0),
+        y: sanitizeValue(initialState.cameraUp?.y || 1),
+        z: sanitizeValue(initialState.cameraUp?.z || 0),
       },
       target: {
         x: sanitizeValue(initialState.target?.x || 0),
@@ -159,9 +269,21 @@ export function AnimationControls({
         z: sanitizeValue(step.phone.z),
       },
       camera: {
-        x: sanitizeValue(step.camera.x),
-        y: sanitizeValue(step.camera.y),
-        z: sanitizeValue(step.camera.z),
+        position: {
+          x: sanitizeValue(step.camera.position?.x || step.camera.x),
+          y: sanitizeValue(step.camera.position?.y || step.camera.y),
+          z: sanitizeValue(step.camera.position?.z || step.camera.z),
+        },
+        rotation: {
+          x: sanitizeValue(step.camera.rotation?.x || 0),
+          y: sanitizeValue(step.camera.rotation?.y || 0),
+          z: sanitizeValue(step.camera.rotation?.z || 0),
+        },
+      },
+      cameraUp: {
+        x: sanitizeValue(step.cameraUp?.x || 0),
+        y: sanitizeValue(step.cameraUp?.y || 1),
+        z: sanitizeValue(step.cameraUp?.z || 0),
       },
       target: {
         x: sanitizeValue(step.target?.x || 0),
@@ -176,6 +298,8 @@ export function AnimationControls({
     onPlay({ initialState: sanitizedInitial, steps: sanitizedSteps });
   };
 
+  const roundVal = (val) => parseFloat(Number(val).toFixed(1));
+
   const addStep = () => {
     const captured = onCapture();
     setSteps((prev) => [
@@ -187,9 +311,21 @@ export function AnimationControls({
           z: roundVal(captured.phone.z),
         },
         camera: {
-          x: roundVal(captured.camera.x),
-          y: roundVal(captured.camera.y),
-          z: roundVal(captured.camera.z),
+          position: {
+            x: roundVal(captured.camera.position.x),
+            y: roundVal(captured.camera.position.y),
+            z: roundVal(captured.camera.position.z),
+          },
+          rotation: {
+            x: roundVal(captured.camera.rotation.x),
+            y: roundVal(captured.camera.rotation.y),
+            z: roundVal(captured.camera.rotation.z),
+          },
+        },
+        cameraUp: {
+          x: roundVal(captured.cameraUp.x),
+          y: roundVal(captured.cameraUp.y),
+          z: roundVal(captured.cameraUp.z),
         },
         target: {
           x: roundVal(captured.target.x),
@@ -215,7 +351,11 @@ export function AnimationControls({
         ...prev,
         {
           phone: { ...lastPhonePos },
-          camera: { x: randomVal(), y: randomVal(), z: randomVal() },
+          camera: {
+            position: { x: randomVal(), y: randomVal(), z: randomVal() },
+            rotation: { x: 0, y: 0, z: 0 },
+          },
+          cameraUp: { x: 0, y: 1, z: 0 },
           target: { ...lastTarget },
           duration: 1.5,
           delay: 0,
@@ -231,8 +371,6 @@ export function AnimationControls({
     }
   };
 
-  const roundVal = (val) => parseFloat(Number(val).toFixed(1));
-
   const handleCapture = (index) => {
     const captured = onCapture();
     if (captured) {
@@ -242,9 +380,21 @@ export function AnimationControls({
         z: roundVal(captured.phone.z),
       };
       const roundedCamera = {
-        x: roundVal(captured.camera.x),
-        y: roundVal(captured.camera.y),
-        z: roundVal(captured.camera.z),
+        position: {
+          x: roundVal(captured.camera.position.x),
+          y: roundVal(captured.camera.position.y),
+          z: roundVal(captured.camera.position.z),
+        },
+        rotation: {
+          x: roundVal(captured.camera.rotation.x),
+          y: roundVal(captured.camera.rotation.y),
+          z: roundVal(captured.camera.rotation.z),
+        },
+      };
+      const roundedCameraUp = {
+        x: roundVal(captured.cameraUp.x),
+        y: roundVal(captured.cameraUp.y),
+        z: roundVal(captured.cameraUp.z),
       };
       const roundedTarget = {
         x: roundVal(captured.target.x),
@@ -257,6 +407,7 @@ export function AnimationControls({
         setInitialState({
           phone: roundedPhone,
           camera: roundedCamera,
+          cameraUp: roundedCameraUp,
           target: roundedTarget,
         });
       } else {
@@ -267,6 +418,7 @@ export function AnimationControls({
             ...newSteps[index],
             phone: roundedPhone,
             camera: roundedCamera,
+            cameraUp: roundedCameraUp,
             target: roundedTarget,
           };
           return newSteps;
@@ -295,19 +447,19 @@ export function AnimationControls({
           </span>
           <input
             type="number"
-            value={initialState.camera.x}
+            value={initialState.camera.position?.x || initialState.camera.x}
             onChange={(e) => handleInitialChange("camera", "x", e.target.value)}
             placeholder="X"
           />
           <input
             type="number"
-            value={initialState.camera.y}
+            value={initialState.camera.position?.y || initialState.camera.y}
             onChange={(e) => handleInitialChange("camera", "y", e.target.value)}
             placeholder="Y"
           />
           <input
             type="number"
-            value={initialState.camera.z}
+            value={initialState.camera.position?.z || initialState.camera.z}
             onChange={(e) => handleInitialChange("camera", "z", e.target.value)}
             placeholder="Z"
           />
@@ -379,19 +531,19 @@ export function AnimationControls({
               </span>
               <input
                 type="number"
-                value={step.camera.x}
+                value={step.camera.position?.x || step.camera.x}
                 onChange={(e) => handleStepChange(index, "camera", "x", e.target.value)}
                 placeholder="X"
               />
               <input
                 type="number"
-                value={step.camera.y}
+                value={step.camera.position?.y || step.camera.y}
                 onChange={(e) => handleStepChange(index, "camera", "y", e.target.value)}
                 placeholder="Y"
               />
               <input
                 type="number"
-                value={step.camera.z}
+                value={step.camera.position?.z || step.camera.z}
                 onChange={(e) => handleStepChange(index, "camera", "z", e.target.value)}
                 placeholder="Z"
               />
@@ -424,26 +576,40 @@ export function AnimationControls({
             </div>
 
             <div className="row">
-              <span title="Duration of the animation in seconds">Duration</span>
+              <span style={{ width: "60px" }} title="Duration of the animation step in seconds">
+                Duration
+              </span>
               <input
                 type="number"
                 value={step.duration}
                 onChange={(e) => handleStepChange(index, "duration", null, e.target.value)}
                 step="0.1"
+                min="0.1"
               />
-              <span title="Delay before starting this step in seconds">Delay</span>
+            </div>
+
+            <div className="row">
+              <span style={{ width: "60px" }} title="Delay before this step starts">
+                Delay
+              </span>
               <input
                 type="number"
                 value={step.delay}
                 onChange={(e) => handleStepChange(index, "delay", null, e.target.value)}
                 step="0.1"
+                min="0"
               />
             </div>
+
             <div className="row">
-              <span title="Easing function for the animation">Ease</span>
+              <span style={{ width: "60px" }} title="Easing function for the animation">
+                Ease
+              </span>
               <select
                 value={step.ease}
-                onChange={(e) => handleStepChange(index, "ease", null, e.target.value)}>
+                onChange={(e) => handleStepChange(index, "ease", null, e.target.value)}
+                style={{ flex: 1 }}>
+                <option value="none">Linear</option>
                 <option value="power1.in">Power1 In</option>
                 <option value="power1.out">Power1 Out</option>
                 <option value="power1.inOut">Power1 InOut</option>

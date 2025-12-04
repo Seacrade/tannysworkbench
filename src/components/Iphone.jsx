@@ -42,6 +42,7 @@ export const Iphone = forwardRef(({ isSpinning, spinSpeed = 0.5, ...props }, ref
     },
     move: (config, duration, ease) => {
       if (!internalRef.current) return null;
+      console.log("Iphone move:", config, duration, ease);
       const tl = gsap.timeline();
 
       if (config.position) {

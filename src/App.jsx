@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import {
   Environment,
@@ -8,51 +8,12 @@ import {
   GizmoViewport,
 } from "@react-three/drei";
 import { Iphone } from "./components/Iphone";
-import { AnimationControls } from "./components/AnimationControls";
+import { MainUI } from "./components/MainUI";
 import { SceneController } from "./components/SceneController";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { THEMES, getContrastColor } from "./constants";
 import gsap from "gsap";
 import "./App.css";
-
-const THEMES = {
-  white: {
-    name: "White",
-    canvasBg: "#ffffff",
-    cssVars: {
-      "--bg-body": "#ffffff",
-      "--text-main": "#1a1a1a",
-      "--text-muted": "#666666",
-      "--bg-panel": "rgba(240, 240, 240, 0.85)",
-      "--bg-input": "#e0e0e0",
-      "--border-color": "#ccc",
-      "--button-bg": "rgba(0, 0, 0, 0.8)",
-      "--button-text": "#ffffff",
-    },
-  },
-  black: {
-    name: "Black",
-    canvasBg: "#111111",
-    cssVars: {
-      "--bg-body": "#111111",
-      "--text-main": "#ffffff",
-      "--text-muted": "#a1a1a1",
-      "--bg-panel": "rgba(30, 30, 30, 0.85)",
-      "--bg-input": "#2a2a2a",
-      "--border-color": "#444",
-      "--button-bg": "rgba(255, 255, 255, 0.1)",
-      "--button-text": "#ffffff",
-    },
-  },
-};
-
-// Helper to determine text color based on background brightness
-const getContrastColor = (hexColor) => {
-  const r = parseInt(hexColor.substr(1, 2), 16);
-  const g = parseInt(hexColor.substr(3, 2), 16);
-  const b = parseInt(hexColor.substr(5, 2), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#1a1a1a" : "#ffffff";
-};
 
 const SmoothZoom = ({ orbitControlsRef }) => {
   const { camera, gl } = useThree();
@@ -118,35 +79,10 @@ function App() {
   const [customColor, setCustomColor] = useState("#0f172a");
   const [uiWidth, setUiWidth] = useState(340);
   const [showUI, setShowUI] = useState(true);
-  const isResizingRef = useRef(false);
   const iphoneRef = useRef();
   const cameraControlRef = useRef();
   const timelineRef = useRef(null);
   const orbitControlsRef = useRef();
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isResizingRef.current) return;
-
-      // Limit width between 300px and 600px
-      const newWidth = Math.max(300, Math.min(600, e.clientX));
-      setUiWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      isResizingRef.current = false;
-      document.body.style.cursor = "default";
-      document.body.style.userSelect = "auto";
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
 
   useEffect(() => {
     let theme;
@@ -177,8 +113,16 @@ function App() {
     });
   }, [currentTheme, customColor]);
 
-  const handlePlayAnimation = ({ initialState, steps }) => {
-    if (!iphoneRef.current || !cameraControlRef.current) return;
+  const handlePlayAnimation = useCallback(({ initialState, steps }) => {
+    console.log("handlePlayAnimation called with:", { initialState, steps });
+    console.log("orbitControlsRef:", orbitControlsRef.current);
+    if (!iphoneRef.current || !cameraControlRef.current) {
+      console.error("Refs missing:", {
+        iphone: !!iphoneRef.current,
+        controls: !!cameraControlRef.current,
+      });
+      return;
+    }
 
     // Kill previous timeline if it exists
     if (timelineRef.current) {
@@ -226,7 +170,7 @@ function App() {
       const cameraAnim = cameraControlRef.current.move(
         {
           position: step.camera.position,
-          rotation: step.camera.rotation,
+          // rotation: step.camera.rotation, // Removed to prevent conflict with lookAt
           up: step.cameraUp,
         },
         step.duration,
@@ -245,6 +189,11 @@ function App() {
             z: step.target.z,
             duration: step.duration,
             ease: step.ease,
+            onUpdate: () => {
+              if (cameraControlRef.current && orbitControlsRef.current) {
+                cameraControlRef.current.lookAt(orbitControlsRef.current.target);
+              }
+            },
           },
           0
         );
@@ -252,13 +201,13 @@ function App() {
 
       masterTl.add(stepTl, "+=" + (step.delay || 0));
     });
-  };
+  }, []);
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
-  const handleStartRecording = async () => {
+  const handleStartRecording = useCallback(async () => {
     try {
       // We must use getDisplayMedia to capture the iframe (DOM element)
       // canvas.captureStream() cannot see the iframe.
@@ -332,14 +281,14 @@ function App() {
       setIsRecording(false);
       setShowUI(true); // Ensure UI comes back if error
     }
-  };
+  }, []);
 
-  const handleStopRecording = () => {
+  const handleStopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
-  };
-  const handleCapture = () => {
+  }, []);
+  const handleCapture = useCallback(() => {
     const phoneState = iphoneRef.current ? iphoneRef.current.getState() : null;
     const cameraState = cameraControlRef.current ? cameraControlRef.current.getState() : null;
     const target = orbitControlsRef.current
@@ -354,7 +303,52 @@ function App() {
       cameraUp: cameraState && cameraState.up ? cameraState.up : { x: 0, y: 1, z: 0 },
       target: { x: target.x, y: target.y, z: target.z },
     };
-  };
+  }, []);
+
+  const handleQuickRotate = useCallback(() => {
+    if (iphoneRef.current) {
+      iphoneRef.current.quickRotate(quickRotationDegrees);
+    }
+  }, [quickRotationDegrees]);
+
+  const handleBringMeBack = useCallback(() => {
+    if (cameraControlRef.current) {
+      cameraControlRef.current.move(
+        {
+          position: { x: 0, y: 0, z: 15 },
+          rotation: { x: 0, y: 0, z: 0 },
+          up: { x: 0, y: 1, z: 0 },
+        },
+        1.5,
+        "power3.out"
+      );
+    }
+    if (iphoneRef.current) {
+      iphoneRef.current.move(
+        { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 } },
+        1.5,
+        "power3.out"
+      );
+    }
+    if (orbitControlsRef.current) {
+      // Disable controls during reset
+      orbitControlsRef.current.enabled = false;
+
+      // Animate target back to 0,0,0
+      gsap.to(orbitControlsRef.current.target, {
+        x: 0,
+        y: 0,
+        z: 0,
+        duration: 1.5,
+        ease: "power3.out",
+        onComplete: () => {
+          // Re-enable controls and reset internal state if needed
+          orbitControlsRef.current.enabled = true;
+          orbitControlsRef.current.update();
+        },
+      });
+    }
+  }, []);
 
   const [savedAnimations, setSavedAnimations] = useState([]);
 
@@ -488,188 +482,29 @@ function App() {
           )}
         </div>
       )}
-      <div className="ui-overlay" style={{ width: uiWidth, display: showUI ? "flex" : "none" }}>
-        <div
-          className="resize-handle"
-          onMouseDown={() => {
-            isResizingRef.current = true;
-            document.body.style.cursor = "ew-resize";
-            document.body.style.userSelect = "none";
-          }}
-          style={{
-            position: "absolute",
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: "10px",
-            cursor: "ew-resize",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "auto",
-          }}>
-          <div
-            style={{
-              width: "4px",
-              height: "40px",
-              background: "var(--border-color)",
-              borderRadius: "2px",
-            }}
-          />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 className="gradient-hover">Tanny's Playground</h1>
-          <button
-            onClick={() => setShowUI(false)}
-            style={{
-              width: "auto",
-              padding: "4px 8px",
-              fontSize: "0.8rem",
-              background: "transparent",
-              border: "1px solid var(--text-muted)",
-              color: "var(--text-muted)",
-              cursor: "pointer",
-              pointerEvents: "auto",
-            }}>
-            Hide
-          </button>
-        </div>
-
-        <div className="controls" style={{ marginBottom: "10px" }}>
-          <div style={{ display: "flex", gap: "5px", marginBottom: "10px" }}>
-            {Object.keys(THEMES).map((themeKey) => (
-              <button
-                key={themeKey}
-                onClick={() => setCurrentTheme(themeKey)}
-                style={{
-                  flex: 1,
-                  padding: "8px",
-                  fontSize: "0.8rem",
-                  background:
-                    currentTheme === themeKey ? "var(--primary-color)" : "var(--button-bg)",
-                  opacity: currentTheme === themeKey ? 1 : 0.7,
-                }}>
-                {THEMES[themeKey].name}
-              </button>
-            ))}
-            <div style={{ flex: 1, position: "relative" }}>
-              <input
-                type="color"
-                value={customColor}
-                onChange={(e) => {
-                  setCustomColor(e.target.value);
-                  setCurrentTheme("custom");
-                }}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  opacity: 0,
-                  cursor: "pointer",
-                  zIndex: 2,
-                }}
-              />
-              <button
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  padding: "8px",
-                  fontSize: "0.8rem",
-                  background:
-                    currentTheme === "custom" ? "var(--primary-color)" : "var(--button-bg)",
-                  opacity: currentTheme === "custom" ? 1 : 0.7,
-                }}>
-                Custom
-              </button>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "5px", alignItems: "center", marginBottom: "5px" }}>
-            <button onClick={() => setIsSpinning(!isSpinning)} style={{ flex: 1 }}>
-              {isSpinning ? "Staaahp im dizzy" : "Spin me"}
-            </button>
-            <input
-              type="range"
-              min="0.1"
-              max="5"
-              step="0.1"
-              value={spinSpeed}
-              onChange={(e) => setSpinSpeed(parseFloat(e.target.value))}
-              style={{ width: "60px" }}
-              title={`Spin Speed: ${spinSpeed}`}
-            />
-          </div>
-          <div style={{ display: "flex", gap: "5px", marginBottom: "5px" }}>
-            <input
-              type="number"
-              value={quickRotationDegrees}
-              onChange={(e) => setQuickRotationDegrees(parseFloat(e.target.value))}
-              style={{ width: "60px" }}
-              placeholder="Deg"
-              title="Rotation Degrees"
-            />
-            <button
-              onClick={() => {
-                if (iphoneRef.current) {
-                  iphoneRef.current.quickRotate(quickRotationDegrees);
-                }
-              }}
-              style={{ flex: 1 }}>
-              Quick Rotate
-            </button>
-          </div>
-          <button
-            onClick={() => {
-              if (cameraControlRef.current) {
-                cameraControlRef.current.move(
-                  {
-                    position: { x: 0, y: 0, z: 15 },
-                    rotation: { x: 0, y: 0, z: 0 },
-                    up: { x: 0, y: 1, z: 0 },
-                  },
-                  1.5,
-                  "power3.out"
-                );
-              }
-              if (iphoneRef.current) {
-                iphoneRef.current.move(
-                  { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 } },
-                  1.5,
-                  "power3.out"
-                );
-              }
-              if (orbitControlsRef.current) {
-                // Disable controls during reset
-                orbitControlsRef.current.enabled = false;
-
-                // Animate target back to 0,0,0
-                gsap.to(orbitControlsRef.current.target, {
-                  x: 0,
-                  y: 0,
-                  z: 0,
-                  duration: 1.5,
-                  ease: "power3.out",
-                  onComplete: () => {
-                    // Re-enable controls and reset internal state if needed
-                    orbitControlsRef.current.enabled = true;
-                    orbitControlsRef.current.update();
-                  },
-                });
-              }
-            }}
-            style={{ marginTop: "5px" }}>
-            Bring me back
-          </button>
-        </div>
-        <AnimationControls
-          onPlay={handlePlayAnimation}
-          onCapture={handleCapture}
-          isRecording={isRecording}
-          onStartRecording={handleStartRecording}
-          onStopRecording={handleStopRecording}
-        />
-      </div>
+      <MainUI
+        uiWidth={uiWidth}
+        setUiWidth={setUiWidth}
+        showUI={showUI}
+        setShowUI={setShowUI}
+        currentTheme={currentTheme}
+        setCurrentTheme={setCurrentTheme}
+        customColor={customColor}
+        setCustomColor={setCustomColor}
+        isSpinning={isSpinning}
+        setIsSpinning={setIsSpinning}
+        spinSpeed={spinSpeed}
+        setSpinSpeed={setSpinSpeed}
+        quickRotationDegrees={quickRotationDegrees}
+        setQuickRotationDegrees={setQuickRotationDegrees}
+        onQuickRotate={handleQuickRotate}
+        onBringMeBack={handleBringMeBack}
+        onPlayAnimation={handlePlayAnimation}
+        onCapture={handleCapture}
+        isRecording={isRecording}
+        onStartRecording={handleStartRecording}
+        onStopRecording={handleStopRecording}
+      />
     </div>
   );
 }
