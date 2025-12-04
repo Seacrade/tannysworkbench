@@ -14,6 +14,7 @@ export function AnimationControls({
       : {
           phone: { x: 0, y: -2, z: 0 },
           camera: { x: 0, y: 0, z: 25 },
+          target: { x: 0, y: 0, z: 0 },
         };
   });
 
@@ -25,6 +26,7 @@ export function AnimationControls({
           {
             phone: { x: 0, y: 0, z: 0 },
             camera: { x: 0, y: 0, z: 5 },
+            target: { x: 0, y: 0, z: 0 },
             duration: 1.5,
             delay: 0,
             ease: "power2.inOut",
@@ -143,6 +145,11 @@ export function AnimationControls({
         y: sanitizeValue(initialState.camera.y),
         z: sanitizeValue(initialState.camera.z),
       },
+      target: {
+        x: sanitizeValue(initialState.target?.x || 0),
+        y: sanitizeValue(initialState.target?.y || 0),
+        z: sanitizeValue(initialState.target?.z || 0),
+      },
     };
 
     const sanitizedSteps = steps.map((step) => ({
@@ -156,6 +163,11 @@ export function AnimationControls({
         y: sanitizeValue(step.camera.y),
         z: sanitizeValue(step.camera.z),
       },
+      target: {
+        x: sanitizeValue(step.target?.x || 0),
+        y: sanitizeValue(step.target?.y || 0),
+        z: sanitizeValue(step.target?.z || 0),
+      },
       duration: sanitizeValue(step.duration) || 1.5,
       delay: sanitizeValue(step.delay) || 0,
       ease: step.ease,
@@ -165,11 +177,25 @@ export function AnimationControls({
   };
 
   const addStep = () => {
+    const captured = onCapture();
     setSteps((prev) => [
       ...prev,
       {
-        phone: { ...prev[prev.length - 1].phone },
-        camera: { ...prev[prev.length - 1].camera },
+        phone: {
+          x: roundVal(captured.phone.x),
+          y: roundVal(captured.phone.y),
+          z: roundVal(captured.phone.z),
+        },
+        camera: {
+          x: roundVal(captured.camera.x),
+          y: roundVal(captured.camera.y),
+          z: roundVal(captured.camera.z),
+        },
+        target: {
+          x: roundVal(captured.target.x),
+          y: roundVal(captured.target.y),
+          z: roundVal(captured.target.z),
+        },
         duration: 1.5,
         delay: 0,
         ease: "power2.inOut",
@@ -181,11 +207,16 @@ export function AnimationControls({
     const randomVal = () => parseFloat((Math.random() * 20 - 10).toFixed(1));
     setSteps((prev) => {
       const lastPhonePos = prev.length > 0 ? prev[prev.length - 1].phone : initialState.phone;
+      const lastTarget =
+        prev.length > 0
+          ? prev[prev.length - 1].target || { x: 0, y: 0, z: 0 }
+          : initialState.target || { x: 0, y: 0, z: 0 };
       return [
         ...prev,
         {
           phone: { ...lastPhonePos },
           camera: { x: randomVal(), y: randomVal(), z: randomVal() },
+          target: { ...lastTarget },
           duration: 1.5,
           delay: 0,
           ease: "power2.inOut",
@@ -215,12 +246,18 @@ export function AnimationControls({
         y: roundVal(captured.camera.y),
         z: roundVal(captured.camera.z),
       };
+      const roundedTarget = {
+        x: roundVal(captured.target.x),
+        y: roundVal(captured.target.y),
+        z: roundVal(captured.target.z),
+      };
 
       if (index === -1) {
         // Capture to Initial State
         setInitialState({
           phone: roundedPhone,
           camera: roundedCamera,
+          target: roundedTarget,
         });
       } else {
         // Capture to Step
@@ -230,6 +267,7 @@ export function AnimationControls({
             ...newSteps[index],
             phone: roundedPhone,
             camera: roundedCamera,
+            target: roundedTarget,
           };
           return newSteps;
         });
@@ -246,33 +284,15 @@ export function AnimationControls({
           <h4>Start Position</h4>
           <button
             onClick={() => handleCapture(-1)}
+            title="Capture current camera and target position"
             style={{ width: "auto", marginTop: 0, padding: "2px 8px", fontSize: "0.8rem" }}>
             Current
           </button>
         </div>
         <div className="row">
-          <span style={{ width: "60px" }}>Phone</span>
-          <input
-            type="number"
-            value={initialState.phone.x}
-            onChange={(e) => handleInitialChange("phone", "x", e.target.value)}
-            placeholder="X"
-          />
-          <input
-            type="number"
-            value={initialState.phone.y}
-            onChange={(e) => handleInitialChange("phone", "y", e.target.value)}
-            placeholder="Y"
-          />
-          <input
-            type="number"
-            value={initialState.phone.z}
-            onChange={(e) => handleInitialChange("phone", "z", e.target.value)}
-            placeholder="Z"
-          />
-        </div>
-        <div className="row">
-          <span style={{ width: "60px" }}>Cam</span>
+          <span style={{ width: "60px" }} title="Controls the position of the Camera">
+            Cam
+          </span>
           <input
             type="number"
             value={initialState.camera.x}
@@ -292,6 +312,31 @@ export function AnimationControls({
             placeholder="Z"
           />
         </div>
+        <div className="row">
+          <span
+            style={{ width: "60px" }}
+            title="Controls where the Camera is looking (Focus Point)">
+            Target
+          </span>
+          <input
+            type="number"
+            value={initialState.target?.x || 0}
+            onChange={(e) => handleInitialChange("target", "x", e.target.value)}
+            placeholder="X"
+          />
+          <input
+            type="number"
+            value={initialState.target?.y || 0}
+            onChange={(e) => handleInitialChange("target", "y", e.target.value)}
+            placeholder="Y"
+          />
+          <input
+            type="number"
+            value={initialState.target?.z || 0}
+            onChange={(e) => handleInitialChange("target", "z", e.target.value)}
+            placeholder="Z"
+          />
+        </div>
       </div>
 
       <div style={{ maxHeight: "400px", overflowY: "auto", paddingRight: "5px" }}>
@@ -302,6 +347,7 @@ export function AnimationControls({
               <div>
                 <button
                   onClick={() => handleCapture(index)}
+                  title="Capture current camera and target position"
                   style={{
                     width: "auto",
                     marginTop: 0,
@@ -328,29 +374,9 @@ export function AnimationControls({
             </div>
 
             <div className="row">
-              <span style={{ width: "60px" }}>Phone</span>
-              <input
-                type="number"
-                value={step.phone.x}
-                onChange={(e) => handleStepChange(index, "phone", "x", e.target.value)}
-                placeholder="X"
-              />
-              <input
-                type="number"
-                value={step.phone.y}
-                onChange={(e) => handleStepChange(index, "phone", "y", e.target.value)}
-                placeholder="Y"
-              />
-              <input
-                type="number"
-                value={step.phone.z}
-                onChange={(e) => handleStepChange(index, "phone", "z", e.target.value)}
-                placeholder="Z"
-              />
-            </div>
-
-            <div className="row">
-              <span style={{ width: "60px" }}>Cam</span>
+              <span style={{ width: "60px" }} title="Controls the position of the Camera">
+                Cam
+              </span>
               <input
                 type="number"
                 value={step.camera.x}
@@ -372,14 +398,40 @@ export function AnimationControls({
             </div>
 
             <div className="row">
-              <span>Duration</span>
+              <span
+                style={{ width: "60px" }}
+                title="Controls where the Camera is looking (Focus Point)">
+                Target
+              </span>
+              <input
+                type="number"
+                value={step.target?.x || 0}
+                onChange={(e) => handleStepChange(index, "target", "x", e.target.value)}
+                placeholder="X"
+              />
+              <input
+                type="number"
+                value={step.target?.y || 0}
+                onChange={(e) => handleStepChange(index, "target", "y", e.target.value)}
+                placeholder="Y"
+              />
+              <input
+                type="number"
+                value={step.target?.z || 0}
+                onChange={(e) => handleStepChange(index, "target", "z", e.target.value)}
+                placeholder="Z"
+              />
+            </div>
+
+            <div className="row">
+              <span title="Duration of the animation in seconds">Duration</span>
               <input
                 type="number"
                 value={step.duration}
                 onChange={(e) => handleStepChange(index, "duration", null, e.target.value)}
                 step="0.1"
               />
-              <span>Delay</span>
+              <span title="Delay before starting this step in seconds">Delay</span>
               <input
                 type="number"
                 value={step.delay}
@@ -388,7 +440,7 @@ export function AnimationControls({
               />
             </div>
             <div className="row">
-              <span>Ease</span>
+              <span title="Easing function for the animation">Ease</span>
               <select
                 value={step.ease}
                 onChange={(e) => handleStepChange(index, "ease", null, e.target.value)}>

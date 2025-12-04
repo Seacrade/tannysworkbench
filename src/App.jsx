@@ -185,6 +185,12 @@ function App() {
     iphoneRef.current.set({ position: initialState.phone });
     cameraControlRef.current.set({ position: initialState.camera });
 
+    if (orbitControlsRef.current) {
+      const target = initialState.target || { x: 0, y: 0, z: 0 };
+      orbitControlsRef.current.target.set(target.x, target.y, target.z);
+      orbitControlsRef.current.update();
+    }
+
     // 2. Create Master Timeline
     const masterTl = gsap.timeline();
     timelineRef.current = masterTl;
@@ -203,6 +209,20 @@ function App() {
 
       if (phoneAnim) stepTl.add(phoneAnim, 0);
       if (cameraAnim) stepTl.add(cameraAnim, 0);
+
+      if (orbitControlsRef.current && step.target) {
+        stepTl.to(
+          orbitControlsRef.current.target,
+          {
+            x: step.target.x,
+            y: step.target.y,
+            z: step.target.z,
+            duration: step.duration,
+            ease: step.ease,
+          },
+          0
+        );
+      }
 
       masterTl.add(stepTl, "+=" + (step.delay || 0));
     });
@@ -296,10 +316,14 @@ function App() {
   const handleCapture = () => {
     const phoneState = iphoneRef.current ? iphoneRef.current.getState() : null;
     const cameraState = cameraControlRef.current ? cameraControlRef.current.getState() : null;
+    const target = orbitControlsRef.current
+      ? orbitControlsRef.current.target
+      : { x: 0, y: 0, z: 0 };
 
     return {
       phone: phoneState ? phoneState.position : { x: 0, y: 0, z: 0 },
       camera: cameraState ? cameraState.position : { x: 0, y: 0, z: 25 },
+      target: { x: target.x, y: target.y, z: target.z },
     };
   };
 
