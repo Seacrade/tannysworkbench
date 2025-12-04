@@ -11,6 +11,7 @@ import { Iphone } from "./components/Iphone";
 import { MainUI } from "./components/MainUI";
 import { SceneController } from "./components/SceneController";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { Slider3D } from "./components/Slider3D";
 import { THEMES, getContrastColor } from "./constants";
 import gsap from "gsap";
 import "./App.css";
@@ -204,6 +205,7 @@ function App() {
   }, []);
 
   const [isRecording, setIsRecording] = useState(false);
+  const [showSlider3D, setShowSlider3D] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
@@ -504,7 +506,9 @@ function App() {
         isRecording={isRecording}
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
+        onOpenSlider3D={() => setShowSlider3D(true)}
       />
+      {showSlider3D && <Slider3D onBack={() => setShowSlider3D(false)} />}
     </div>
   );
 }

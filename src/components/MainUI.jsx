@@ -24,6 +24,7 @@ export function MainUI({
   isRecording,
   onStartRecording,
   onStopRecording,
+  onOpenSlider3D,
 }) {
   const isResizingRef = useRef(false);
 
@@ -177,6 +178,11 @@ export function MainUI({
         </div>
         <button onClick={onBringMeBack} style={{ marginTop: "5px" }}>
           Bring me back
+        </button>
+        <button
+          onClick={onOpenSlider3D}
+          style={{ marginTop: "5px", background: "linear-gradient(45deg, #ff0080, #7928ca)" }}>
+          Open 3D Slider
         </button>
       </div>
       <AnimationControls
