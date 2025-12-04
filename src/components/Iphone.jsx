@@ -4,7 +4,7 @@ import gsap from "gsap";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
+export const Iphone = forwardRef(({ isSpinning, spinSpeed = 0.5, ...props }, ref) => {
   const { scene } = useGLTF(`${import.meta.env.BASE_URL}models/iphone_16/scene.gltf`);
   const internalRef = useRef();
   const htmlRef = useRef();
@@ -16,6 +16,15 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
   });
 
   useImperativeHandle(ref, () => ({
+    quickRotate: (degrees, duration = 1.5) => {
+      if (!internalRef.current) return;
+      const radians = (degrees * Math.PI) / 180;
+      gsap.to(internalRef.current.rotation, {
+        y: `+=${radians}`,
+        duration: duration,
+        ease: "circ.out",
+      });
+    },
     set: (config) => {
       if (!internalRef.current) return;
       if (config.position) {
@@ -215,7 +224,7 @@ export const Iphone = forwardRef(({ isSpinning, ...props }, ref) => {
 
   useFrame((state, delta) => {
     if (isSpinning && internalRef.current) {
-      internalRef.current.rotation.y += delta * 0.5;
+      internalRef.current.rotation.y += delta * spinSpeed;
     }
 
     if (internalRef.current && htmlRef.current) {

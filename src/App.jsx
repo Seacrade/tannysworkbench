@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, ContactShadows } from "@react-three/drei";
+import { Environment, OrbitControls, ContactShadows, GizmoHelper, GizmoViewport } from "@react-three/drei";
 import { Iphone } from "./components/Iphone";
 import { AnimationControls } from "./components/AnimationControls";
 import { SceneController } from "./components/SceneController";
@@ -106,6 +106,8 @@ const SmoothZoom = ({ orbitControlsRef }) => {
 
 function App() {
   const [isSpinning, setIsSpinning] = useState(false);
+  const [spinSpeed, setSpinSpeed] = useState(0.5);
+  const [quickRotationDegrees, setQuickRotationDegrees] = useState(360);
   const [currentTheme, setCurrentTheme] = useState("black");
   const [customColor, setCustomColor] = useState("#0f172a");
   const [uiWidth, setUiWidth] = useState(340);
@@ -351,7 +353,12 @@ function App() {
 
           <Suspense fallback={null}>
             <SceneController ref={cameraControlRef} />
-            <Iphone ref={iphoneRef} scale={[0.5, 0.5, 0.5]} isSpinning={isSpinning} />
+            <Iphone
+              ref={iphoneRef}
+              scale={[0.5, 0.5, 0.5]}
+              isSpinning={isSpinning}
+              spinSpeed={spinSpeed}
+            />
             <Environment preset="city" />
           </Suspense>
 
@@ -363,6 +370,9 @@ function App() {
             enableDamping={true}
             dampingFactor={0.05}
           />
+          <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
+            <GizmoViewport axisColors={["#9d4b4b", "#2f7f4f", "#3b5b9d"]} labelColor="white" />
+          </GizmoHelper>
           <SmoothZoom orbitControlsRef={orbitControlsRef} />
         </Canvas>
       </div>
@@ -547,9 +557,40 @@ function App() {
               </button>
             </div>
           </div>
-          <button onClick={() => setIsSpinning(!isSpinning)}>
-            {isSpinning ? "Staaahp im dizzy" : "Spin me"}
-          </button>
+          <div style={{ display: "flex", gap: "5px", alignItems: "center", marginBottom: "5px" }}>
+            <button onClick={() => setIsSpinning(!isSpinning)} style={{ flex: 1 }}>
+              {isSpinning ? "Staaahp im dizzy" : "Spin me"}
+            </button>
+            <input
+              type="range"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value={spinSpeed}
+              onChange={(e) => setSpinSpeed(parseFloat(e.target.value))}
+              style={{ width: "60px" }}
+              title={`Spin Speed: ${spinSpeed}`}
+            />
+          </div>
+          <div style={{ display: "flex", gap: "5px", marginBottom: "5px" }}>
+            <input
+              type="number"
+              value={quickRotationDegrees}
+              onChange={(e) => setQuickRotationDegrees(parseFloat(e.target.value))}
+              style={{ width: "60px" }}
+              placeholder="Deg"
+              title="Rotation Degrees"
+            />
+            <button
+              onClick={() => {
+                if (iphoneRef.current) {
+                  iphoneRef.current.quickRotate(quickRotationDegrees);
+                }
+              }}
+              style={{ flex: 1 }}>
+              Quick Rotate
+            </button>
+          </div>
           <button
             onClick={() => {
               if (cameraControlRef.current) {
